@@ -1,0 +1,41 @@
+# LIHPS Sprint Mechanics 0.2.0
+
+An English-language, separate web app for examiner-confirmed Sprint Mechanics Assessment Score (S-MAS) review. The red, white and sky-blue LIHPS scheme is retained, with a new sprint icon. All video decoding and MediaPipe Full analysis run in the browser. No original videos, landmarks, scores or assessment details are sent to a server by the app. The hosted page itself may require sign-in; its hosting service handles ordinary website requests.
+
+## Use on iPhone
+
+1. Open the provided HTTPS app address in current Safari. For an installed app, choose Share, Add to Home Screen, and enable Open as Web App. The icon is labelled Sprint S-MAS.
+2. While online, expand Recording guide, score definitions and offline use. Choose Check offline readiness and wait for confirmation that the app, model and decoder are cached. The initial download is approximately 33 MB. Storage is separate for each browser, installed app and origin. Recheck from the Home Screen installation itself.
+3. Enter an athlete ID, date and assessor; the other assessment details are optional. Record measured running speed separately if available. This version does not compute speed from video or calibration marks.
+4. Choose one or both camera-original MOV or MP4 clips. Left side means the anatomical left side being assessed, not the left of the screen. Obtain clear views of each side in separate trials. Both limbs appear in several criteria, including the opposite trailing limb.
+5. Check the preview and use Rotate 90° if necessary, then Process left video, Process right video or Process both videos. Both inputs are not required. When a second clip is added later, only the unprocessed clip is analysed; existing scoring on the other side is retained. Keep the app open during processing.
+6. Confirm running direction and enter the camera's capture-rate setting. The app reports decoded playback cadence separately; neither the entered rate nor the playback cadence proves that all originally captured frames were retained.
+7. Select an automatically suggested sequence if available. Inspect the five events using View, the slider, Previous frame and Next frame. Set current frame assigns and confirms the displayed frame for that event. Confirm frame accepts an automatic suggestion after your inspection. All five must be in chronological order. If suggestions fail, set the five events manually.
+8. Use Review interval to inspect the whole interval from maximal vertical projection to late swing, then explicitly check I reviewed the full interval.
+9. Review the phase landmarks, including both limbs. Check I reviewed the phase landmarks, then choose Analyse confirmed frames below Supporting measurements. This uses stored coordinates and your corrections: it neither decodes the clip again nor invokes MediaPipe. Examiner scoring follows below this section. Each numeric proposal includes its evidence and Confirm / Refute buttons. Items without a defensible coordinate-based proposal offer Absent (0), Present (1), or Unable. A proposal never counts as a final score until you decide. A complete /12 requires all twelve numeric decisions, all five confirmed phases, interval and landmark review, and current analysis.
+10. For tracking review, expand Landmark correction and tracking review. Select the anatomical side and landmark, then tap its position on the frame. Reset frame landmarks / references recovers the original estimate, including an original missing estimate. Corrections apply only to that frame and clear proposals and scores for the assessed side, preserving selected event frames and their confirmations. Review the landmarks and analyse again. Optional purple reference marks support C7 and greater trochanter at touchdown, posterior back/gluteal outline at late swing and touchdown, and an examiner-estimated centre-of-mass projection at touchdown. The chosen landmark stays selected while stepping. Next flagged stretch and Mark stretch reviewed organise review; acknowledgement does not validate or correct tracking.
+11. Save on this device stores this assessment in this browser, with landmarks and small phase images. Original videos are not stored. To resume full video review after reopening, reattach originals with the same filename and size. Keep the original files. Export CSV and Print / save PDF provide separate records; CSVs and reports contain athlete data.
+
+## Recording
+
+The Bramah protocol uses two maximal-effort 35 m overground sprints following warm-up and progressive runs, recorded at 240 fps. Capture the 25–30 m zone using a stationary camera 7 m perpendicular to the zone at 0.8 m height. Show the entire body and ground, in good lighting, with a clear view of each side. A 5 m timing-gate interval can supply a manually entered speed. Treadmill assessments are outside this version's scope.
+
+## Interpretation and engineering limits
+
+The score descriptions follow the authors' 2024 criteria. Thresholds such as 45°, 15° and 20° retain their original contexts; all scoring is examiner confirmed. The MediaPipe shoulder–hip line is a labelled proxy for trunk lean, not the published greater-trochanter-to-C7 reference. Pelvic tilt, lumbar extension, rotation, shoe-ground gaps and centre of mass are not directly measured. Supporting 2D geometry generates reviewable proposals for trailing-limb extension, back kick, trunk lean and shin orientation, and a positive contact thigh-separation proposal when its angular criterion is met. Optional examiner reference marks can enable late-swing separation, the alternative contact separation criterion and a projected foot-span/CoM comparison. Proposals never award points automatically. Rotation, pelvic/lumbar posture, foot inclination and collapse remain visual decisions; no undocumented angle cutoffs are invented for them.
+
+The trailing-limb proposal uses an adjustable straight-knee tolerance, initially 10°. This tolerance is an engineering assumption: the published “fully extended” cue does not give a numeric cutoff. Back-kick calf comparison and the shoe/CoM comparison are explicitly labelled approximations. Trunk lean uses shoulder/hip proxies unless C7 and greater-trochanter references are marked. None of the proposal rules has been validated as an automatic S-MAS classifier. Changing frames, markers, direction or tolerance invalidates proposals and scores. Rerunning an unchanged confirmed-frame analysis preserves examiner decisions. CSV and PDF reports distinguish proposals from final decisions and include analysis evidence.
+
+Automatic events are unvalidated engineering suggestions. The detector uses projected foot height, ankle stationarity, pelvic height, knee extension and hip–ankle alignment in a fixed-camera overground sequence. A moving camera, occlusion, wrong-leg tracking, low pixel resolution or poor ground visibility can defeat it. It may offer no sequence; manual event assignment remains available.
+
+Tracking flags use confidence, projected segment-length changes and timestamp gaps. They can miss plausible but incorrect tracking, and projected lengths legitimately vary with perspective. Midstance, toe-off and touchdown suggestions are not force-plate events. The app does not report contact times, flight times, instantaneous speed, acceleration, or angular velocity.
+
+Video timestamp labels follow file presentation time. Slow-motion exports may retime or drop frames. No real-time biomechanical time base is inferred from a capture-rate label. Use camera-original recordings and inspect the retained frames.
+
+Left/right comparison is an absolute point difference, not a percentage or LSI. One-point differences may fall within the published measurement error. The app does not calculate injury probability, apply an injury-risk cutoff, or determine return-to-sport readiness. It has not been clinically validated.
+
+Each assessed side uses one selected sequence. Additional sequences are alternatives and replacing the selected sequence clears that side's scoring; this version does not average or take the worst score across strides.
+
+## Publishing and maintenance
+
+See [PUBLISHING.md](PUBLISHING.md) for GitHub Pages setup and updates. Run `npm test` and `npm run check` before a release. The application requires no build or dependency installation.

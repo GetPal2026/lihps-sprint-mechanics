@@ -32,8 +32,8 @@ export function measures(frame,side,aspect=1,direction=1){
   const kneeIncluded=angle(hip,knee,ankle);
   return {kneeFlexion:kneeIncluded===null?null:180-kneeIncluded,
     thighSeparation:hip&&knee&&farHip&&farKnee?angle(knee,hip,{x:hip.x+farKnee.x-farHip.x,y:hip.y+farKnee.y-farHip.y}):null,
-    shoulderHipLean:hip&&shoulder?Math.atan2(direction*(shoulder.x-hip.x),hip.y-shoulder.y)*180/Math.PI:null,
-    shinForward:ankle&&knee?Math.atan2(direction*(ankle.x-knee.x),ankle.y-knee.y)*180/Math.PI:null};
+    shoulderHipLean:hip&&shoulder&&Math.hypot(shoulder.x-hip.x,shoulder.y-hip.y)>1e-5?Math.atan2(direction*(shoulder.x-hip.x),hip.y-shoulder.y)*180/Math.PI:null,
+    shinForward:ankle&&knee&&Math.hypot(ankle.x-knee.x,ankle.y-knee.y)>1e-5?Math.atan2(direction*(ankle.x-knee.x),ankle.y-knee.y)*180/Math.PI:null};
 }
 export function phaseProblems(events,count){
   const v=PHASES.map(p=>events?.[p.id]?.index);
@@ -47,7 +47,8 @@ export function summary(clip){
   const phaseIssues=phaseProblems(clip?.events,clip?.frames?.length??clip?.frameCount??0);
   const phasesConfirmed=PHASES.every(p=>clip?.events?.[p.id]?.confirmed);
   const intervalConfirmed=!!clip?.intervalConfirmed;
-  const total=answered===12&&phasesConfirmed&&intervalConfirmed&&!phaseIssues.length?values.reduce((a,b)=>a+b,0):null;
+  const analysisReady=!clip||!('markersReviewed' in clip)||(clip.markersReviewed&&!!clip.analysis);
+  const total=answered===12&&phasesConfirmed&&intervalConfirmed&&analysisReady&&!phaseIssues.length?values.reduce((a,b)=>a+b,0):null;
   return {answered,unassessable,total,phasesConfirmed,intervalConfirmed,phaseIssues,positive:values.filter(v=>v===1).length};
 }
 function rangeBest(start,end,score,largest=false){let best=null,value=largest?-Infinity:Infinity;for(let i=Math.max(0,start);i<=end;i++){const v=score(i);if(Number.isFinite(v)&&(largest?v>value:v<value)){value=v;best=i;}}return best;}
@@ -92,8 +93,9 @@ export function qualityFlags(frames,side,aspect=1){
     return flags;});
 }
 export function flagGroups(flags){const out=[];for(let i=0;i<flags.length;i++){if(!flags[i].length)continue;let end=i;while(end+1<flags.length&&flags[end+1].length)end++;out.push({start:i,end,reasons:[...new Set(flags.slice(i,end+1).flat())]});i=end;}return out;}
-export function invalidate(clip){for(const p of PHASES)if(clip.events?.[p.id])clip.events[p.id].confirmed=false;clip.intervalConfirmed=false;clip.scores={};}
-export function csvRows(session){const rows=[['assessment_id','athlete_id','date','assessor','side','clip_name','capture_fps_stated','decoded_fps','running_direction','speed_m_s','setting','surface','footwear','previous_hsi','protocol_notes','side_notes','item','phase','score','phase_frame','phase_pts_s','phase_confirmed','interval_reviewed','complete_total','app_version']];
+export function invalidate(clip){for(const p of PHASES)if(clip.events?.[p.id])clip.events[p.id].confirmed=false;clip.intervalConfirmed=false;clip.scores={};clip.scoreReview={};clip.analysis=null;clip.markersReviewed=false;}
+export function csvRows(session){const rows=[['assessment_id','athlete_id','date','assessor','side','clip_name','capture_fps_stated','decoded_fps','running_direction','speed_m_s','setting','surface','footwear','previous_hsi','protocol_notes','side_notes','item','phase','score','phase_frame','phase_pts_s','phase_confirmed','interval_reviewed','complete_total','app_version','suggested_score','suggestion_kind','suggestion_evidence','analysis_generated_at','review_decision','markers_reviewed','straight_knee_tolerance_deg']];
   for(const side of SIDES){const c=session.clips[side];if(!c)continue;const s=summary(c);for(const item of ITEMS){const event=c.events[item.phase==='interval'?'mvp':item.phase];rows.push([session.id,session.athlete,session.date,session.assessor,side,c.fileName,c.captureFps,c.decodedFps,c.direction===-1?'leftward':'rightward',session.speed,session.setting,session.surface,session.footwear,session.history,session.notes,c.notes,item.name,item.phase,c.scores[item.id]??'',event?.index==null?'':event.index+1,c.frames?.[event?.index]?.time??c.eventTimes?.[item.phase==='interval'?'mvp':item.phase]??'',!!event?.confirmed,!!c.intervalConfirmed,s.total??'',session.version]);}}
+  let row=1;for(const side of SIDES){const c=session.clips[side];if(!c)continue;for(const item of ITEMS){const p=c.analysis?.suggestions?.[item.id];rows[row++].push(p?.value??'',p?.kind??'',p?.evidence??'',c.analysis?.generatedAt??'',c.scoreReview?.[item.id]?.decision??'',c.markersReviewed??'',c.analysis?.straightKneeTolerance??'');}}
   return rows;}
 export function toCsv(rows){return '\uFEFF'+rows.map(row=>row.map(v=>{let s=String(v??'');if(/^[=+@\-\t\r]/.test(s))s="'"+s;return '"'+s.replaceAll('"','""')+'"';}).join(',')).join('\r\n');}
